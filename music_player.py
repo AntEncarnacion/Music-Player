@@ -1,10 +1,10 @@
+from tkinter import filedialog
 from tkinter import *
 from pygame import mixer
 from pathlib import PureWindowsPath, Path
 from time import sleep
 import sqlite3
 from sqlite3 import Error
-
 
 #############################################################
 # Database
@@ -19,8 +19,6 @@ def create_connection(db_file):
     finally:
         if conn:
             conn.close()
-
-
 
 def create_table(conn, create_table_sql):
     """ create a table from the create_table_sql statement
@@ -121,18 +119,44 @@ def stop_song():
     mixer.music.stop()
 
 #############################################################
+# GUI
+
+def browse_button():
+    # Allow user to select a directory and store it in global var
+    # called folder_path
+    global folder_path
+    filename = filedialog.askdirectory()
+    folder_path.set(filename)
+    print(filename)
+
+#############################################################
 # Main
 
 if __name__ == '__main__':
 
     ##########################################
+    # Mixer
+    mixer.init()
+
+    ##########################################
+    # GUI
+    root = Tk()
+    folder_path = StringVar()
+    lbl1 = Label(master=root,textvariable=folder_path)
+    lbl1.grid(row=0, column=1)
+    button1 = Button(text="Browse", command=browse_button)
+    button1.grid(row=0, column=3)
+
+    mainloop()
+
+    ##########################################
     # Directories
-    DIRECTORY = Path(str(PureWindowsPath("C:/Users/Anthony/Music/Spotify/")))
+    DIRECTORY = Path(str(PureWindowsPath(folder_path)))
     songs = [Path(i) for i in sorted(DIRECTORY.glob('*.mp3'))]
 
     ##########################################
     # Database
-    create_connection(r".\music_player.db")
+    conn = create_connection(r".\music_player.db")
     sql_create_songs_table = """ CREATE TABLE IF NOT EXISTS songs (
                                         id integer PRIMARY KEY,
                                         title text NOT NULL,
@@ -156,33 +180,25 @@ if __name__ == '__main__':
                                         name text NOT NULL
                                     ); """
 
-    if conn is not None:
-        # create songs table
-        create_table(conn, sql_create_songs_table)
+    # create songs table
+    create_table(conn, sql_create_songs_table)
 
-        # create album table
-        create_table(conn, sql_create_album_table)
+    # create album table
+    create_table(conn, sql_create_album_table)
 
-        # create artists table
-        create_table(conn, sql_create_artists_table)
+    # create artists table
+    create_table(conn, sql_create_artists_table)
 
-        # create playlist songs table
-        create_table(conn, sql_create_playlist_songs_table)
-        
-        # create playlists table
-        create_table(conn, sql_create_playlists_table)
-
-    else:
-        print("Error! cannot create the database connection.")
-
-    ##########################################
-    # Mixer
-    mixer.init()
+    # create playlist songs table
+    create_table(conn, sql_create_playlist_songs_table)
+    
+    # create playlists table
+    create_table(conn, sql_create_playlists_table)
 
     ##########################################
     # Execution/Testing
-    load_song(songs[0])
-    play_song()
+    # load_song(songs[0])
+    # play_song()
 
-    while mixer.music.get_busy():
-        sleep(1)
+    # while mixer.music.get_busy():
+    #     sleep(1)
